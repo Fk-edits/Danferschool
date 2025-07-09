@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Student Results Viewer</title>
+<style>
+body {
+    font-family: "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: white;
+    padding: 25px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 420px;
+    text-align: center;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(-20px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+h1 {
+    color: #2E7D32;
+    margin-bottom: 20px;
+}
+
+input[type="text"],
+button {
+    margin: 8px 0;
+    width: 90%;
+    padding: 12px;
+    font-size: 1em;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    transition: border 0.3s;
+}
+
+input[type="text"]:focus {
+    border: 1px solid #4CAF50;
+    outline: none;
+}
+
+button {
+    background: #2E7D32;
+    color: white;
+    cursor: pointer;
+    border: none;
+    transition: background 0.3s, transform 0.2s;
+}
+
+button:hover {
+    background: #388E3C;
+    transform: scale(1.02);
+}
+
+#result {
+    margin-top: 20px;
+    text-align: left;
+    font-size: 0.95em;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+#result h2 {
+    color: #2E7D32;
+}
+
+#error {
+    color: red;
+    margin-top: 10px;
+}
+#backBtn {
+    
+    
+    
+}
+
+#backBtn:hover {
+    background: #bbb;
+    transform: scale(1.02);
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    
+    
+<div class="container">
+    <button id="backBtn">← Back to Main</button>
+    <h1>📊 Student Results Viewer</h1>
+    <input type="text" id="studentID" placeholder="Enter Student ID (e.g., S001)" />
+    <input type="text" id="studentName" placeholder="Enter Student Name (e.g., Fikir )" />
+    <button id="searchBtn">Search</button>
+    <div id="result"></div>
+    <div id="error"></div>
+</div>
+<script>
+let studentsData = [];
+
+async function loadExcel() {
+    const response = await fetch('all.xlsx');
+    const arrayBuffer = await response.arrayBuffer();
+    const data = new Uint8Array(arrayBuffer);
+    const workbook = XLSX.read(data, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    studentsData = XLSX.utils.sheet_to_json(worksheet);
+    console.log("Excel loaded automatically:", studentsData);
+}
+
+document.getElementById('searchBtn').addEventListener('click', function() {
+    if (studentsData.length === 0) {
+        alert("Data not loaded yet. Please wait a moment and try again.");
+        return;
+    }
+    const id = document.getElementById('studentID').value.trim();
+    const name = document.getElementById('studentName').value.trim().toLowerCase();
+    const resultDiv = document.getElementById('result');
+    const errorDiv = document.getElementById('error');
+    resultDiv.innerHTML = "";
+    errorDiv.innerHTML = "";
+
+    if (!id || !name) {
+        errorDiv.innerHTML = "Please enter both Student ID and Name.";
+        return;
+    }
+
+    const student = studentsData.find(s => 
+        s.ID == id && s.Name.toLowerCase() == name
+    );
+
+    if (student) {
+        let html = `<h2>Result for ${student.Name}</h2>`;
+        for (let key in student) {
+            html += `<p><strong>${key}:</strong> ${student[key]}</p>`;
+        }
+        resultDiv.innerHTML = html;
+    } else {
+        errorDiv.innerHTML = "Student not found. Please check the ID and Name.";
+    }
+});
+
+loadExcel();
+document.getElementById('backBtn').addEventListener('click', function() {
+    window.location.href = '2.html';
+});
+</script>
+</body>
+</html>

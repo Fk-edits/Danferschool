@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Danfer School Ask Me Bot</title>
+<style>
+body {
+    font-family: "Segoe UI", sans-serif;
+    background: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+.container {
+    background: white;
+    width: 95%;
+    max-width: 400px;
+    height: 90vh;
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.header {
+    background: #2E7D32;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-size: 1.1em;
+}
+.chat {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background: #fafafa;
+}
+.message {
+    padding: 8px 12px;
+    margin: 8px 0;
+    border-radius: 15px;
+    max-width: 80%;
+}
+.user {
+    background: #DCF8C6;
+    align-self: flex-end;
+}
+.bot {
+    background: #E0E0E0;
+    align-self: flex-start;
+}
+.input-area {
+    display: flex;
+    border-top: 1px solid #ddd;
+}
+input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    font-size: 1em;
+}
+button {
+    background: #2E7D32;
+    color: white;
+    border: none;
+    padding: 0 20px;
+    cursor: pointer;
+    font-size: 1.1em;
+}
+button:hover {
+    background: #388E3C;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">🤖 Ask Me - Danfer School Bot</div>
+    <div class="chat" id="chat"></div>
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Ask me about Danfer School..." autocomplete="off" />
+        <button id="sendBtn">Send</button>
+    </div>
+</div>
+
+<script>
+// Extended Q&A with multiple keywords
+const qaPairs = [
+    { keywords: ["school name", "name"], answer: "Danfer School is a leading educational institution in the region." },
+    { keywords: ["location", "where", "address"], answer: " DANFAR school is located at bishoftu town Dukem city xedecha wereda ." },
+    { keywords: ["principal", "headmaster", "headmistress", "leader"], answer: "The principal of Danfer School is Mr. Bekele Abebe." },
+    { keywords: ["contact", "phone", "call", "number"], answer: "You can contact Danfer School at +251 900 000 000." },
+    { keywords: ["fees", "school fees", "tuition", "cost"], answer: "The fees structure is affordable and varies by grade." },
+    { keywords: ["admission", "enrollment", "register"], answer: "Admission opens in August every year." },
+    { keywords: ["school", "hours", "time", "schedule", "calendar", "timetable"], answer: "Danfer School runs from 8:00 AM to 3:30 PM, Monday to Friday." },
+    { keywords: ["uniform", "dress code", "clothing"], answer: "Students wear a green and white uniform with the school badge." },
+    { keywords: ["curriculum", "syllabus", "program"], answer: "Danfer School follows the national curriculum with additional STEM activities." },
+    { keywords: ["sports", "games", "athletics", "football", "volleyball"], answer: "We offer football, athletics, and volleyball programs." },
+    { keywords: ["clubs", "groups", "activities"], answer: "We have Science Club, Reading Club, and Environmental Club." },
+    { keywords: ["transport", "bus", "shuttle"], answer: "School transport is available for selected routes." },
+    { keywords: ["canteen", "food", "meals", "lunch"], answer: "Our canteen offers hygienic meals and snacks at reasonable prices." },
+    { keywords: ["library", "books", "reading"], answer: "The school library has over 3000 books and a study area." },
+    { keywords: ["lab", "laboratory", "science"], answer: "Science labs are fully equipped for practical learning." },
+    { keywords: ["vision", "goal", "aim"], answer: "Danfer School's vision is to produce competent and ethical students." },
+    { keywords: ["mission", "purpose"], answer: "Our mission is quality education for all learners." },
+    { keywords: ["values", "principles"], answer: "Respect, responsibility, and excellence are our core values." },
+    { keywords: ["pta", "parent teacher association"], answer: "The Parent-Teacher Association meets once every term." },
+    { keywords: ["calendar", "schedule", "events"], answer: "The academic calendar aligns with the Ministry of Education schedule." },
+    { keywords: ["exam", "examination", "test"], answer: "Exams are conducted at the end of each term." },
+    { keywords: ["grading", "marks", "scores"], answer: "Grades are provided based on continuous assessments and exams." },
+    { keywords: ["holidays", "vacation", "break"], answer: "School observes national and religious holidays." },
+    { keywords: ["discipline", "rules", "behavior"], answer: "Danfer School enforces discipline to create a good learning environment." },
+    { keywords: ["scholarship", "financial aid", "support"], answer: "Limited scholarships are available for top-performing students." },
+    { keywords: ["teachers", "staff", "faculty"], answer: "Our teachers are qualified and experienced." },
+    { keywords: ["parent meeting", "parents meeting", "conference"], answer: "Parents can schedule meetings with teachers during office hours." },
+    { keywords: ["student council", "student government"], answer: "We have a student council that represents student voices." },
+    { keywords: ["extra classes", "remedial classes", "tutoring"], answer: "Extra classes are available for Grade 8 and Grade 10 students." },
+    { keywords: ["announcement", "news", "notice"], answer: "Announcements are shared on our notice board and website." },
+    { keywords: ["higher mark"], answer: "Fikir" },
+];
+
+// Split input into multiple questions by punctuation or new lines
+function splitQuestions(input) {
+    return input.toLowerCase()
+        .split(/[\?\.!\n,;]+/)
+        .map(q => q.trim())
+        .filter(q => q.length > 0);
+}
+
+// Find best matching answers for each question chunk
+function findAnswers(questions) {
+    const answers = [];
+
+    questions.forEach(q => {
+        let bestMatch = null;
+        let bestScore = 0;
+
+        qaPairs.forEach(pair => {
+            // Count how many keywords appear in the question
+            let score = 0;
+            pair.keywords.forEach(k => {
+                if (q.includes(k)) score++;
+            });
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = pair.answer;
+            }
+        });
+
+        if (bestScore > 0 && bestMatch) {
+            answers.push(bestMatch);
+        } else {
+            answers.push("Thank you for your question. Please contact the school office for further detailed information.");
+        }
+    });
+
+    return answers;
+}
+
+const chat = document.getElementById('chat');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+
+function addMessage(text, sender) {
+    const msg = document.createElement('div');
+    msg.className = `message ${sender}`;
+    msg.textContent = text;
+    chat.appendChild(msg);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function handleSend() {
+    const input = userInput.value.trim();
+    if (!input) return;
+    addMessage(input, "user");
+    userInput.value = "";
+
+    const questions = splitQuestions(input);
+    const answers = findAnswers(questions);
+
+    let delay = 300;
+    answers.forEach(answer => {
+        setTimeout(() => addMessage(answer, "bot"), delay);
+        delay += 700;
+    });
+}
+
+sendBtn.addEventListener('click', handleSend);
+userInput.addEventListener('keypress', e => {
+    if (e.key === "Enter") handleSend();
+});
+
+addMessage("Hello! 👋 I am the Danfer School Ask Me Bot. Feel free to ask your questions. You can ask multiple questions separated by ? or .", "bot");
+</script>
+</body>
+</html>
